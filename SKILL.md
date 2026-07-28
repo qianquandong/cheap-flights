@@ -39,11 +39,10 @@ fli airports shanghai
 
 Useful flags: `--stops 0` · `--bags N` · `--carry-on` · `--exclude-basic` · `--time` · `--max-layover` · `--alliance`.
 
-**Google is the only data source.** `fli` is a Google Flights scraper, so it rots. On parse errors or empty results for a route that obviously has flights, retry once, then read the page in the browser pane:
+**Google is the only data source**, through `fli`, and `fli` is a scraper, so it rots. On parse errors or empty results for a route that obviously has flights, retry once. If it still fails, say the lookup failed and hand the user the search URL:
 `https://www.google.com/travel/flights?q=Flights%20from%20DFW%20to%20PVG%20on%202026-10-01%20through%202026-10-15`
-(`preview_start` → `get_page_text`; WebFetch returns nothing, the page is JS-rendered).
 
-If google.com won't load at all, the fallback is on the same domain and will fail the same way — say Google is unreachable and stop, rather than walking the user through a second dead end. There is no non-Google backend and adding one is out of scope.
+Don't fall back to driving the page in a browser. This skill is a CLI wrapper — when the CLI is down, the honest move is to say so, not to start scraping by hand.
 
 Install note if it ever breaks: `flights` 0.9.0 ships without `click` even though `typer` needs it — `pipx inject flights click`.
 
@@ -55,11 +54,7 @@ Install note if it ever breaks: `flights` 0.9.0 ships without `click` even thoug
 
    - **Date flexibility** — `fli dates` across the range, or ±3 days. Usually the single biggest lever, and it's one command.
    - **Nearby airports** — origin and destination metro alternates (DFW/DAL, NRT/HND, LGW/LHR/STN, EWR/JFK/LGA, ONT/BUR/LAX, PVG/SHA). Read the arrival airport off the returned legs, not off the `query` echo in the JSON — the echo just repeats what you asked for, so it cannot tell you whether the alternate produced different flights or Google quietly served the same metro.
-   - **Southwest is invisible to Google Flights — and therefore to `fli`.** For any US domestic route, check `southwest.com` in the browser pane separately or you will quote a wrong "cheapest". Bags fly free there, which often flips the ranking. What's confirmed about this check:
-     - The site renders in the browser pane and `get_page_text` reads it fine, so the check is executable.
-     - **Deep links mostly don't work.** `select.html?originationAirportCode=DAL&destinationAirportCode=LAX&departureDate=…` redirects to the homepage and carries only the origin — destination, dates and trip type are all dropped. Fill the form fields and submit; there is no URL shortcut.
-     - **Southwest books a much shorter horizon than Google.** The homepage states it outright ("Now accepting reservations through April 05, 2027" as of 2026-07-28 — roughly eight months). Read that line before searching: past it Southwest has nothing, and the check is a waste of the user's time rather than a gap in your answer. Say you skipped it and why.
-     - Submitting the search form is a user-visible action on an external site — get the user's OK before doing it rather than assuming.
+   - **Southwest is invisible to Google Flights — and therefore to `fli`.** On US domestic routes, say so in one line and give the user [southwest.com](https://www.southwest.com) to check themselves. Bags fly free there, so it can beat a fare that looks cheaper here. Don't drive their site — deep links are stripped to the origin airport, so it needs a form fill, and that's a browser-automation project, not this skill. Southwest also only books about eight months out; past that there's nothing to check.
    - **Split one-ways** — two one-way `fli flights` calls instead of one `--return`. Sometimes 15–30% cheaper domestically, sometimes much worse; check rather than assume. Measured once on DFW–PVG: $667 + $618 against an $888 round-trip, so the round-trip won by $397.
    - **Booking window** — domestic sweet spot ~1–3 months out, international ~2–8 months. Inside two weeks, say plainly that prices only go up from here.
 

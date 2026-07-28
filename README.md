@@ -32,7 +32,7 @@ fli flights DFW PVG 2026-10-01 --return 2026-10-15 --bags 1 --exclude-basic --fo
 
 - **Date flexibility** — usually the biggest lever, and one command.
 - **Nearby airports** — origin and destination metro alternates, verified against the arrival airport in the results rather than the query echo.
-- **Southwest**, separately. Southwest doesn't list on Google Flights, so `fli` cannot see it. On US domestic routes this is the most common way to quote a wrong "cheapest".
+- **Southwest**, flagged for you to check. Southwest doesn't list on Google Flights, so `fli` can't see it — on US domestic routes that's the most common way to quote a wrong "cheapest". The skill tells you; it doesn't drive their site.
 - **Split one-ways vs round-trip** — sometimes a 15–30% domestic win, sometimes far worse. Checked, not assumed.
 - **Real cost** — re-prices finalists with bags and without basic economy, because a $123 fare with a $60 carry-on isn't cheaper than a $150 fare with two free bags.
 
@@ -43,7 +43,8 @@ These are the known holes, stated plainly rather than discovered later.
 - **Google is the only data source**, so it has to be reachable. Where it isn't — mainland China, most notably — this skill doesn't work and doesn't try to; there's no alternate backend.
 - **No booking links.** `fli` has no `booking` subcommand and its JSON carries only a `booking_token`, never a URL, so the skill hands you a Google Flights *search* URL, not a deep link to the itinerary.
 - **One passenger.** The CLI always prices a single adult. `PassengerInfo` exists in the library but isn't exposed, so multi-passenger totals have to be confirmed on the search page — the skill won't multiply a fare by headcount, because a larger party can reprice into the next fare bucket.
-- **The Southwest check needs a form fill.** southwest.com reads fine in the browser pane, but deep links are stripped down to the origin airport, so the search has to be typed in. Southwest also books a shorter horizon than Google — about eight months — so beyond that the check is skipped rather than failed.
+- **Southwest is a pointer, not a search.** Their deep links are stripped to the origin airport, so pricing it would mean filling and submitting their form — browser automation this skill deliberately doesn't do. You get told to look; you look.
+- **No browser fallback.** When `fli` fails the skill says so and gives you a search URL. It doesn't switch to scraping pages by hand.
 - Google Flights publishes roughly 11 months of inventory. Ask for dates beyond that and you get nothing — not an error, just no data.
 - `fli` is a scraper and breaks when Google changes things. The skill falls back to reading the page in a browser and is instructed never to substitute a remembered price for a failed lookup.
 - Fares 8+ months out are thin and move a lot. Treat them as shape, not quotes.
