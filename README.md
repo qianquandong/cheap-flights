@@ -40,7 +40,7 @@ fli flights DFW PVG 2026-10-01 --return 2026-10-15 --bags 1 --exclude-basic --fo
 
 These are the known holes, stated plainly rather than discovered later.
 
-- **All pricing comes from Google, so Google has to be reachable.** In mainland China it isn't, and the browser fallback is the same domain — you'll need a VPN, or price the trip on 携程/Trip.com instead.
+- **Google is the only data source**, so it has to be reachable. Where it isn't — mainland China, most notably — this skill doesn't work and doesn't try to; there's no alternate backend.
 - **No booking links.** `fli` has no `booking` subcommand and its JSON carries only a `booking_token`, never a URL, so the skill hands you a Google Flights *search* URL, not a deep link to the itinerary.
 - **One passenger.** The CLI always prices a single adult. `PassengerInfo` exists in the library but isn't exposed, so multi-passenger totals have to be confirmed on the search page — the skill won't multiply a fare by headcount, because a larger party can reprice into the next fare bucket.
 - **The Southwest check is untested.** It's the loudest claim in the skill and nobody has yet driven southwest.com through the browser pane to confirm it works.

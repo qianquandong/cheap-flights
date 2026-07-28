@@ -36,13 +36,11 @@ fli airports shanghai
 
 Useful flags: `--stops 0` · `--bags N` · `--carry-on` · `--exclude-basic` · `--time` · `--max-layover` · `--alliance`.
 
-**Everything priced here comes from Google.** `fli` is a Google Flights scraper and the browser fallback is the same site, so the two failure modes need different responses — do not treat them alike.
-
-**A. `fli` broke but Google is reachable** (parse errors, empty results on a route that obviously has flights). The scraper rotted. Retry once, then read the page in the browser pane:
+**Google is the only data source.** `fli` is a Google Flights scraper, so it rots. On parse errors or empty results for a route that obviously has flights, retry once, then read the page in the browser pane:
 `https://www.google.com/travel/flights?q=Flights%20from%20DFW%20to%20PVG%20on%202026-10-01%20through%202026-10-15`
 (`preview_start` → `get_page_text`; WebFetch returns nothing, the page is JS-rendered).
 
-**B. Google itself is unreachable** — `Could not reach Google Flights`, timeouts, or the browser pane failing to load google.com at all. **The most likely cause is that the user is in mainland China**, where Google is blocked; the browser fallback is on the same domain and fails identically, so do not walk them through it. Say which it is and offer: turn on a VPN and re-run, or price it on `trip.com` / 携程 through the browser pane. **That path is untested** — say so on the first run. For flights *departing* China the domestic sites are often cheaper anyway, so it is not purely a downgrade.
+If google.com won't load at all, the fallback is on the same domain and will fail the same way — say Google is unreachable and stop, rather than walking the user through a second dead end. There is no non-Google backend and adding one is out of scope.
 
 Install note if it ever breaks: `flights` 0.9.0 ships without `click` even though `typer` needs it — `pipx inject flights click`.
 
