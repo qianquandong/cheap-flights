@@ -24,9 +24,21 @@ fli dates DFW NRT --from 2026-10-01 --to 2026-11-01
 
 Useful flags: `--stops 0` · `--bags N` · `--carry-on` · `--exclude-basic` (prices real cost, see step 3) · `--class` · `--time` · `--airlines`/`-A` · `--max-layover`.
 
-It is a Google Flights scraper, so it rots. On `Could not reach Google Flights`, retry once, then fall back to the browser pane on
+**Everything priced here comes from Google.** `fli` is a Google Flights scraper and the browser fallback is the same site, so the two failure modes need different responses — do not treat them alike.
+
+**A. `fli` broke but Google is reachable** (parse errors, empty results on a route that obviously has flights). The scraper rotted. Retry once, then read the page directly in the browser pane:
 `https://www.google.com/travel/flights?q=Flights%20from%20DFW%20to%20NRT%20on%202026-10-12%20through%202026-10-22`
-(`preview_start` → `get_page_text`; WebFetch returns nothing, the page is JS-rendered). Never substitute remembered prices for a failed lookup.
+(`preview_start` → `get_page_text`; WebFetch returns nothing, the page is JS-rendered).
+
+**B. Google itself is unreachable** — `Could not reach Google Flights`, timeouts, or the browser pane failing to load google.com at all. **The most likely cause is that the user is in mainland China**, where Google is blocked; the browser fallback is on the same domain and will fail identically, so do not walk them through it. Say plainly which it is and offer:
+
+- Turn on a VPN, then re-run — everything below works unchanged.
+- Or price it on a site reachable from China. `trip.com` / 携程 is the obvious one, driven through the browser pane (`preview_start` → `read_page`). **This path is untested** — treat the first run as an experiment and tell the user so.
+- For flights *departing* China, the domestic sites are often cheaper than Google anyway, so this is not purely a downgrade.
+
+Note that `pto.py` needs no network at all. When Google is unreachable you can still deliver the whole calendar half — the ranked windows — and only the pricing is blocked. Lead with what you *can* answer.
+
+Never substitute remembered prices for a failed lookup, under either failure mode.
 
 Install note if it ever breaks: `flights` 0.9.0 ships without `click` even though `typer` needs it — `pipx inject flights click`. The `fli-mcp` binary is unusable without the `mcp` extra; we drive the CLI from Bash instead, deliberately.
 

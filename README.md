@@ -77,6 +77,7 @@ fli dates DFW PVG --from 2026-11-20 --to 2026-11-29 --round --duration 10 --form
 
 ## Limits
 
+- **All pricing comes from Google, so this needs Google to be reachable.** In mainland China it isn't, and the browser fallback is the same domain — you'll need a VPN, or price the trip on 携程/Trip.com instead. The trip-window half (`pto.py`) is offline and works regardless.
 - Google Flights publishes roughly 11 months of inventory. Ask for dates beyond that and you get nothing — not an error, just no data.
 - `fli` is a scraper. It breaks when Google changes things; the skill falls back to reading the page in a browser and is instructed never to substitute a remembered price for a failed lookup.
 - Fares 8+ months out are thin and move a lot. Treat them as shape, not as quotes.
