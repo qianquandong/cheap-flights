@@ -43,7 +43,7 @@ These are the known holes, stated plainly rather than discovered later.
 - **Google is the only data source**, so it has to be reachable. Where it isn't — mainland China, most notably — this skill doesn't work and doesn't try to; there's no alternate backend.
 - **No booking links.** `fli` has no `booking` subcommand and its JSON carries only a `booking_token`, never a URL, so the skill hands you a Google Flights *search* URL, not a deep link to the itinerary.
 - **One passenger.** The CLI always prices a single adult. `PassengerInfo` exists in the library but isn't exposed, so multi-passenger totals have to be confirmed on the search page — the skill won't multiply a fare by headcount, because a larger party can reprice into the next fare bucket.
-- **The Southwest check is untested.** It's the loudest claim in the skill and nobody has yet driven southwest.com through the browser pane to confirm it works.
+- **The Southwest check needs a form fill.** southwest.com reads fine in the browser pane, but deep links are stripped down to the origin airport, so the search has to be typed in. Southwest also books a shorter horizon than Google — about eight months — so beyond that the check is skipped rather than failed.
 - Google Flights publishes roughly 11 months of inventory. Ask for dates beyond that and you get nothing — not an error, just no data.
 - `fli` is a scraper and breaks when Google changes things. The skill falls back to reading the page in a browser and is instructed never to substitute a remembered price for a failed lookup.
 - Fares 8+ months out are thin and move a lot. Treat them as shape, not quotes.
