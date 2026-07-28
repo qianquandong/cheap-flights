@@ -1,0 +1,6 @@
+# Personal: your real holiday calendar and PTO balance. Never commit.
+holidays.txt
+
+__pycache__/
+*.pyc
+.DS_Store

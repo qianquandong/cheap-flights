@@ -1,0 +1,20 @@
+# Your company holiday calendar + PTO balance.
+#
+# Copy to holidays.txt and fill in from your own HR calendar. holidays.txt is
+# gitignored — it is personal data and must not be committed.
+#
+# Format, one per line:
+#   YYYY-MM-DD  Holiday name
+#   BALANCE n           <- PTO days you have left; caps every window pto.py suggests
+#
+# The dates below are PLACEHOLDERS copied from nothing — replace them. A wrong
+# holiday list produces confidently wrong trip windows, which is worse than none.
+
+BALANCE 15
+
+2026-09-07  Placeholder — first Monday of September
+2026-11-26  Placeholder — Thanksgiving
+2026-11-27  Placeholder — day after Thanksgiving
+2026-12-24  Placeholder — Christmas Eve
+2026-12-25  Placeholder — Christmas Day
+2027-01-01  Placeholder — New Year's Day
