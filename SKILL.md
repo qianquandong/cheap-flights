@@ -70,7 +70,7 @@ Then, whichever path:
 ### Using the windows
 
 - Take the top 2–3 windows, then price each with `fli dates`. The cheapest fare inside a bad window loses to a decent fare that costs three fewer days of leave.
-- Break windows are also peak-fare windows — spring break and winter break are the two most expensive weeks of the year on many routes. Expect the bridge to cost more per ticket and say so explicitly. The tradeoff is days against dollars, and only the user can weigh those.
+- Break windows are also peak-fare windows — spring break and winter break are the two most expensive weeks of the year on many routes. **Always price the best window against the cheapest window and divide**, so the user sees what a day of leave actually costs them. Measured on DFW→PVG: the Christmas bridge saved 5 leave days and cost $860 more than the same trip in October — $172 per day bought. Stating that number is the whole point; "it'll be pricier" is not a decision the user can make.
 - For students, also price the shoulder: leaving two days into the break or coming back two days early is often a few hundred dollars cheaper and costs no class time.
 
 ## Procedure
@@ -82,7 +82,7 @@ Then, whichever path:
 2. **Run the flexibility levers.** Each one is a separate check; report which ones moved the price:
 
    - **Date flexibility** — `fli dates` over ±3 days, or the whole month if dates are soft. Usually the single biggest lever, and it's one command.
-   - **Nearby airports** — DFW ↔ DAL on the origin side; destination metro alternates (NRT/HND, LGW/LHR/STN, EWR/JFK/LGA, ONT/BUR/LAX).
+   - **Nearby airports** — DFW ↔ DAL on the origin side; destination metro alternates (NRT/HND, LGW/LHR/STN, EWR/JFK/LGA, ONT/BUR/LAX, PVG/SHA). Read the arrival airport off the returned legs, not off the `query` echo in the JSON — the echo just repeats what you asked for, so it cannot tell you whether the alternate really produced different flights or Google quietly served the same metro.
    - **Southwest is invisible to Google Flights — and therefore to `fli`.** For any US domestic route out of Dallas, check `southwest.com` in the browser pane separately or you will quote a wrong "cheapest". Bags fly free there, which often flips the ranking. This is the single most common way to be wrong on a DFW/DAL route.
    - **Split one-ways** — two `fli flights` one-way calls instead of one `--return`. Common 15–30% win on domestic; adds a missed-connection risk worth one sentence of warning.
    - **Tue/Wed departures, red-eyes, early-morning banks.**
@@ -92,11 +92,15 @@ Then, whichever path:
 
 4. **Output — exactly three options:**
 
-   | | Route | Price (all-in) | Time | Book |
+   | | Route | Price (all-in) | Time | Search |
    |---|---|---|---|---|
    | Cheapest | ... | $X | Xh, N stops | link |
    | Best value | ... | $X | ... | link |
    | Most convenient | ... | $X | ... | link |
+
+   The column is **Search, not Book** — `fli` has no `booking` subcommand and its JSON carries only a `booking_token`, never a URL, so there is no way to deep-link a specific itinerary. Build a Google Flights search URL and name the airline in the query so the result lands near the top:
+   `https://www.google.com/travel/flights?q=Flights%20from%20DFW%20to%20PVG%20on%202026-10-01%20through%202026-10-15%20on%20Cathay%20Pacific`
+   Don't label it "Book" and don't imply one click finishes the job.
 
    Then two lines: which lever produced the saving, and the volatility caveat ("quoted as of <date>; fares move daily").
 
