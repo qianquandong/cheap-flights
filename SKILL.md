@@ -1,6 +1,6 @@
 ---
 name: cheap-flights
-description: Find the cheapest realistic way to fly a given route, and pick trip dates that burn the fewest vacation days. Use when the user asks to find flights, check airfare, "机票", "便宜机票", "查一下飞X的机票", asks whether to book now or wait, asks when to take a trip, how to use their PTO or annual leave, or gives an origin/destination and dates. Uses the `fli` CLI for Google Flights data plus a separate Southwest check, ranks trip windows against a company holiday calendar, applies flexibility levers (flexible dates, nearby airports, split one-ways, bag-inclusive pricing), and returns 3 priced options.
+description: Find the cheapest realistic way to fly a given route, and pick trip dates that burn the fewest vacation days. Use when the user asks to find flights, check airfare, "机票", "便宜机票", "查一下飞X的机票", asks whether to book now or wait, asks when to take a trip, how to use their PTO, annual leave, or school break, "寒假", "暑假", "年假", or gives an origin/destination and dates. Uses the `fli` CLI for Google Flights data plus a separate Southwest check, ranks trip windows against the user's own calendar of company holidays or academic breaks (looking up a school's academic calendar if given the school name), applies flexibility levers (flexible dates, nearby airports, split one-ways, bag-inclusive pricing), and returns 3 priced options.
 ---
 
 # Cheap Flights
@@ -30,19 +30,36 @@ It is a Google Flights scraper, so it rots. On `Could not reach Google Flights`,
 
 Install note if it ever breaks: `flights` 0.9.0 ships without `click` even though `typer` needs it — `pipx inject flights click`. The `fli-mcp` binary is unusable without the `mcp` extra; we drive the CLI from Bash instead, deliberately.
 
-## Holidays and PTO
+## Holidays, school breaks, and leave
 
-When the user's dates are open ("sometime this fall", "从现在到明年"), pick the *window* before pricing it. `pto.py` ranks windows by days off gained per PTO day burned — bridging a company holiday is usually worth more than any fare lever below.
+When the user's dates are open ("sometime this fall", "从现在到明年"), pick the *window* before pricing it. `pto.py` ranks windows by days off gained per day of leave burned — bridging a holiday, or landing inside a school break, is usually worth more than any fare lever below.
 
 ```bash
 python3 pto.py --from 2026-08-01 --to 2027-06-23 --min-days 10 --max-days 18
 ```
 
-It reads `holidays.txt` (gitignored, user-maintained; `holidays.example.txt` is the template). `BALANCE n` in that file caps the suggestions at the PTO the user actually has left.
+It reads `holidays.txt` (gitignored, user-maintained; `holidays.example.txt` is the template). Single days and ranges both work — `2026-12-19..2027-01-11  Winter break`. `BALANCE n` caps suggestions at the leave the user actually has; a student with no leave to spend sets `BALANCE 0` and gets only windows that cost nothing.
 
-- If `holidays.txt` doesn't exist, say so and ask the user to fill it from their HR calendar. **Never invent a company holiday calendar** — a wrong date produces a confidently wrong trip window, worse than not offering the feature.
-- Take the top 2–3 windows, then price each with `fli dates`. The cheapest fare inside a bad window loses to a decent fare that costs three fewer PTO days.
-- Holiday windows are also peak-fare windows. Expect the bridge to cost more per ticket and say so explicitly — the tradeoff is PTO days against dollars, and only the user can weigh those.
+### Bootstrapping the calendar
+
+If `holidays.txt` doesn't exist, don't just refuse — offer to build it. Ask which they are:
+
+- **Working** — ask for the employer's holiday list. Company holiday calendars are usually internal, so this generally means the user pastes it from HR. Do not guess it from the company name.
+- **Student** — ask for the school name. Academic calendars are public: search for `<school> academic calendar <year>`, read the registrar's page, and draft the ranges.
+
+Then, whichever path:
+
+1. **Show the drafted lines to the user before writing them**, with the source URL and the academic year or calendar year they came from.
+2. Write `holidays.txt` only after the user confirms. Keep the source URL in a `#` comment so the next session can tell where the dates came from and how stale they are.
+3. If the search turns up the wrong year, an unofficial aggregator, or nothing authoritative, say so and ask the user to paste the dates instead.
+
+**Never write a date into `holidays.txt` that you did not read from a source or receive from the user.** A plausible-looking wrong break date produces a confidently wrong trip window and the user has no way to notice — this is the one place in this skill where a quiet guess does real damage. US federal holidays are the only safe exception, and they are not the same as either an employer's or a school's calendar.
+
+### Using the windows
+
+- Take the top 2–3 windows, then price each with `fli dates`. The cheapest fare inside a bad window loses to a decent fare that costs three fewer days of leave.
+- Break windows are also peak-fare windows — spring break and winter break are the two most expensive weeks of the year on many routes. Expect the bridge to cost more per ticket and say so explicitly. The tradeoff is days against dollars, and only the user can weigh those.
+- For students, also price the shoulder: leaving two days into the break or coming back two days early is often a few hundred dollars cheaper and costs no class time.
 
 ## Procedure
 

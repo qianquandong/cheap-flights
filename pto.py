@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Rank trip windows by days off gained per PTO day burned.
+"""Rank trip windows by days off gained per day of leave burned.
 
     ./pto.py --from 2026-08-01 --to 2027-06-23 --min-days 10 --max-days 21
 
-Reads holidays.txt (see holidays.example.txt). Stdlib only.
+Works off any calendar of free days — company holidays, or a school's academic
+breaks. Reads holidays.txt (see holidays.example.txt). Stdlib only.
 """
 
 import argparse
@@ -13,26 +14,51 @@ from pathlib import Path
 DEFAULT_FILE = Path(__file__).with_name("holidays.txt")
 
 
+MAX_SPAN = 366  # a single break longer than a year is a typo, not a vacation
+
+
 def load(path):
-    """-> ({date: name}, balance or None). Format: 'YYYY-MM-DD  Name' / 'BALANCE n' / '# comment'."""
+    """-> ({date: name}, balance or None).
+
+    Lines: 'YYYY-MM-DD  Name' | 'YYYY-MM-DD..YYYY-MM-DD  Name' (school breaks) |
+    'BALANCE n' | '# comment'.
+    """
     holidays, balance = {}, None
     for lineno, raw in enumerate(Path(path).read_text().splitlines(), 1):
         line = raw.split("#")[0].strip()
         if not line:
             continue
         head, _, rest = line.partition(" ")
+        name = rest.strip() or "holiday"
+
         if head.upper() == "BALANCE":
-            balance = int(rest.strip())
+            try:
+                balance = int(rest.strip())
+            except ValueError:
+                raise SystemExit(f"{path}:{lineno}: BALANCE needs a whole number of days, got {rest.strip()!r}")
             continue
+
         try:
-            holidays[dt.date.fromisoformat(head)] = rest.strip() or "holiday"
+            lo, sep, hi = head.partition("..")
+            start = dt.date.fromisoformat(lo)
+            end = dt.date.fromisoformat(hi) if sep else start
         except ValueError:
-            raise SystemExit(f"{path}:{lineno}: expected 'YYYY-MM-DD  Name' or 'BALANCE n', got {raw!r}")
+            raise SystemExit(
+                f"{path}:{lineno}: expected 'YYYY-MM-DD  Name', 'YYYY-MM-DD..YYYY-MM-DD  Name', "
+                f"or 'BALANCE n', got {raw!r}")
+        if end < start:
+            raise SystemExit(f"{path}:{lineno}: range ends before it starts: {raw!r}")
+        if (end - start).days + 1 > MAX_SPAN:
+            raise SystemExit(f"{path}:{lineno}: range spans {(end - start).days + 1} days — typo? {raw!r}")
+
+        while start <= end:
+            holidays[start] = name
+            start += dt.timedelta(days=1)
     return holidays, balance
 
 
 def pto_cost(start, end, holidays):
-    """Workdays in [start, end] that aren't company holidays — i.e. PTO you must burn."""
+    """Weekdays in [start, end] that aren't already free — i.e. PTO days, or classes missed."""
     day, n = start, 0
     while day <= end:
         if day.weekday() < 5 and day not in holidays:
@@ -88,6 +114,29 @@ def demo():
     assert all(w["pto"] <= 2 for w in over)  # balance is a hard filter
 
     assert len(dedupe(rank(dt.date(2026, 11, 1), dt.date(2026, 12, 15), hol, 9, 9), 3)) <= 3
+
+    # Student case: a break written as a range costs zero leave, so it outranks everything.
+    import tempfile
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
+        f.write("# school\nBALANCE 0\n2026-12-19..2027-01-03  Winter break\n")
+        tmp = f.name
+    days, bal = load(tmp)
+    assert bal == 0 and len(days) == 16, (bal, len(days))
+    assert days[dt.date(2026, 12, 25)] == "Winter break"
+    assert pto_cost(dt.date(2026, 12, 19), dt.date(2027, 1, 3), days) == 0
+    top = rank(dt.date(2026, 12, 1), dt.date(2027, 1, 31), days, 10, 16, balance=0)[0]
+    assert top["pto"] == 0, top
+
+    for bad in ("2026-13-01  nope\n", "2026-12-05..2026-12-01  backwards\n", "BALANCE lots\n",
+                "2020-01-01..2026-01-01  typo\n"):
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
+            f.write(bad)
+        try:
+            load(f.name)
+        except SystemExit:
+            pass
+        else:
+            raise AssertionError(f"bad input accepted: {bad!r}")
     print("ok")
 
 
@@ -117,13 +166,13 @@ def main():
     if not windows:
         raise SystemExit("no window fits — raise --balance or widen the date range")
 
-    print(f"{'depart':<12} {'return':<12} {'days off':>8} {'PTO used':>9} {'days/PTO':>9}  holidays used")
+    print(f"{'depart':<12} {'return':<12} {'days off':>8} {'leave used':>11} {'ratio':>6}  free days used")
     for w in windows:
-        used = [n for d, n in sorted(holidays.items()) if w["start"] <= d <= w["end"]]
-        print(f"{w['start']!s:<12} {w['end']!s:<12} {w['days']:>8} {w['pto']:>9} "
-              f"{w['ratio']:>9.1f}  {', '.join(used) or '—'}")
+        used = dict.fromkeys(n for d, n in sorted(holidays.items()) if w["start"] <= d <= w["end"])
+        print(f"{w['start']!s:<12} {w['end']!s:<12} {w['days']:>8} {w['pto']:>11} "
+              f"{w['ratio']:>6.1f}  {', '.join(used) or '—'}")
     if balance is not None:
-        print(f"\nfiltered to windows costing <= {balance} PTO days")
+        print(f"\nfiltered to windows costing <= {balance} days of leave")
 
 
 if __name__ == "__main__":

@@ -2,10 +2,10 @@
 
 A [Claude Code](https://claude.com/claude-code) skill that answers two questions together:
 
-1. **When should I take this trip?** — ranks date windows by how many days off you get per vacation day burned, against your own company holiday calendar.
+1. **When should I take this trip?** — ranks date windows by how many days off you get per day of leave burned, against your own calendar: company holidays if you work, academic breaks if you're a student.
 2. **What's the cheapest way to fly it?** — prices those windows through Google Flights, with the flexibility levers a careful person would actually run.
 
-Most flight tools answer only the second question. The first one is usually worth more: bridging a company holiday can buy you three extra days off for free, which beats any fare trick below.
+Most flight tools answer only the second question. The first one is usually worth more: bridging a holiday can buy you three extra days off for free, which beats any fare trick below.
 
 ## Install
 
@@ -28,7 +28,9 @@ cp holidays.example.txt holidays.txt   # then edit it
 python3 pto.py --demo                  # self-check, prints "ok"
 ```
 
-`holidays.txt` is gitignored. It holds your employer's holiday dates and your PTO balance — keep it local.
+Or skip the editing: tell Claude your school name and it will look up the registrar's academic calendar, show you the dates and the source link, and write the file once you confirm. Company holiday calendars are usually internal, so for those you paste the list from HR — the skill is instructed not to guess an employer's calendar from its name.
+
+`holidays.txt` is gitignored. It holds your real dates and leave balance — keep it local.
 
 ## Use
 
@@ -43,9 +45,15 @@ python3 pto.py --from 2026-08-01 --to 2027-06-23 --min-days 10 --max-days 18
 ```
 
 ```
-depart       return       days off  PTO used  days/PTO  holidays used
-2026-12-24   2027-01-03         11         4       2.8  Christmas Eve, Christmas Day, New Year's Day
-2026-11-20   2026-11-29         10         4       2.5  Thanksgiving, day after Thanksgiving
+depart       return       days off  leave used   ratio  free days used
+2026-12-24   2027-01-03         11           4     2.8  Christmas Eve, Christmas Day, New Year's Day
+2026-11-20   2026-11-29         10           4     2.5  Thanksgiving, day after Thanksgiving
+```
+
+Four vacation days for eleven days off. Students write breaks as ranges and set `BALANCE 0`, so only windows that cost no class time come back:
+
+```
+2026-12-19..2027-01-11  Winter break
 ```
 
 Then price a window:
